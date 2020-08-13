@@ -249,7 +249,7 @@ if __name__ == '__main__':
                  transform=train_transform, target_transform=target_transform,
                  dataset_type="train", balance_data=args.balance_data)
             '''
-            dataset = LPRDataset(img_train_path, train_csv, transforms=train_transfor)
+            dataset = LPRDataset(img_train_path, train_csv, transforms=train_transform)
             label_file = os.path.join(args.checkpoint_folder, "open-images-model-labels.txt")
             store_labels(label_file, dataset.class_names)
             logging.info(dataset)
@@ -269,7 +269,7 @@ if __name__ == '__main__':
         val_dataset = VOCDataset(args.validation_dataset, transform=test_transform,
                                  target_transform=target_transform, is_test=True)
     elif args.dataset_type == 'open_images':
-        val_dataset = LPRDataset(img_val_path, val_csv, transforms=get_transform())
+        val_dataset = LPRDataset(img_val_path, val_csv, transforms=test_transform)
         logging.info(val_dataset)
     logging.info("validation dataset size: {}".format(len(val_dataset)))
 
