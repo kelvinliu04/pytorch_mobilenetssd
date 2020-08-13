@@ -205,6 +205,7 @@ if __name__ == '__main__':
     img_val_path = './dataset/val'
     train_csv = './dataset/train.csv'
     val_csv = './dataset/val.csv'
+    num_classes = 2
 
     timer = Timer()
 
@@ -241,8 +242,9 @@ if __name__ == '__main__':
             dataset = VOCDataset(dataset_path, transform=train_transform,
                                  target_transform=target_transform)
             label_file = os.path.join(args.checkpoint_folder, "voc-model-labels.txt")
-            store_labels(label_file, dataset.class_names)
-            num_classes = len(dataset.class_names)
+            #store_labels(label_file, dataset.class_names)
+            #num_classes = len(dataset.class_names)
+            
         elif args.dataset_type == 'open_images':
             '''
             dataset = OpenImagesDataset(dataset_path,
@@ -251,9 +253,9 @@ if __name__ == '__main__':
             '''
             dataset = LPRDataset(img_train_path, train_csv, transforms=train_transform)
             label_file = os.path.join(args.checkpoint_folder, "open-images-model-labels.txt")
-            store_labels(label_file, dataset.class_names)
+            #store_labels(label_file, dataset.class_names)
             logging.info(dataset)
-            num_classes = len(dataset.class_names)
+            #num_classes = len(dataset.class_names)
 
         else:
             raise ValueError(f"Dataset type {args.dataset_type} is not supported.")
