@@ -25,6 +25,12 @@ from vision.ssd.config import mobilenetv1_ssd_config
 from vision.ssd.config import squeezenet_ssd_config
 from vision.ssd.data_preprocessing import TrainAugmentation, TestTransform
 
+
+def parse_one_annot(path_to_data_file, filename):
+   data = pd.read_csv(path_to_data_file)
+   boxes_array = data[data["filename"] == filename][["xmin", "ymin", "xmax", "ymax"]].values
+   return boxes_array
+
 class LPRDataset(torch.utils.data.Dataset):
     def __init__(self, root, data_file, transforms=None):
         self.root = root
