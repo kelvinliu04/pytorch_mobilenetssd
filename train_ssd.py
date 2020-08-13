@@ -4,7 +4,8 @@ import logging
 import sys
 import itertools
 import pandas as pd
-from PIL import Image
+import numpy as np
+import cv2
 
 import torch
 from torch.utils.data import DataLoader, ConcatDataset
@@ -28,8 +29,8 @@ from vision.ssd.data_preprocessing import TrainAugmentation, TestTransform
 
 def parse_one_annot(path_to_data_file, filename):
    data = pd.read_csv(path_to_data_file)
-   boxes_array = data[data["filename"] == filename][["xmin", "ymin", "xmax", "ymax"]].values
-   return boxes_array
+   boxes = data[data["filename"] == filename][["xmin", "ymin", "xmax", "ymax"]].values
+   return np.array(boxes, dtype=np.float32)
 
 class LPRDataset(torch.utils.data.Dataset):
     def __init__(self, root, data_file, transforms=None):
@@ -41,27 +42,22 @@ class LPRDataset(torch.utils.data.Dataset):
     def __getitem__(self, idx):    
         # load images and bounding boxes
         img_path = os.path.join(self.root, self.imgs[idx])
-        img = Image.open(img_path).convert("RGB")
-        box_list = parse_one_annot(self.path_to_data_file, self.imgs[idx])
-        boxes = torch.as_tensor(box_list, dtype=torch.float32)
-        num_objs = len(box_list)
+        image = self._read_image(img_path)
+        boxes = parse_one_annot(self.path_to_data_file, self.imgs[idx])
+        num_objs = len(boxes)
         # there is only one class
-        labels = torch.ones((num_objs,), dtype=torch.int64)
-        image_id = torch.tensor([idx])
-        area = (boxes[:, 3] - boxes[:, 1]) * (boxes[:, 2] - boxes[:,0])
-        # suppose all instances are not crowd
-        iscrowd = torch.zeros((num_objs,), dtype=torch.int64)
-        target = {}
-        target["boxes"] = boxes
-        target["labels"] = labels
-        target["image_id"] = image_id
-        target["area"] = area
-        target["iscrowd"] = iscrowd
+        labels = np.ones((num_objs,), dtype=np.int64)
         if self.transforms is not None:
-            img, target = self.transforms(img, target)
-        return img, target
+            image, boxes, labels = self.transforms(image, boxes, labels)
+        return image, boxes, labels
+    
+    def _read_image(self, image_file):
+        image = cv2.imread(str(image_file))
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        return image
+    
     def __len__(self):
-             return len(self.imgs)
+        return len(self.imgs)
 
 
 parser = argparse.ArgumentParser(
