@@ -32,10 +32,11 @@ def parse_one_annot(path_to_data_file, filename):
    boxes = data[data["filename"] == filename][["xmin", "ymin", "xmax", "ymax"]].values
    return np.array(boxes, dtype=np.float32)
 
-class LPRDataset(torch.utils.data.Dataset):
-    def __init__(self, root, data_file, transforms=None):
+class LPRDataset:
+    def __init__(self, root, data_file, transform=None, target_transform=None):
         self.root = root
-        self.transforms = transforms
+        self.transform = transform
+        self.target_transform = target_transform
         self.imgs = sorted(os.listdir(root))
         self.path_to_data_file = data_file
         
@@ -47,8 +48,10 @@ class LPRDataset(torch.utils.data.Dataset):
         num_objs = len(boxes)
         # there is only one class
         labels = np.ones((num_objs,), dtype=np.int64)
-        if self.transforms is not None:
-            image, boxes, labels = self.transforms(image, boxes, labels)
+        if self.transform is not None:
+            image, boxes, labels = self.transform(image, boxes, labels)
+        if self.target_transform:
+            boxes, labels = self.target_transform(boxes, labels)
         return image, boxes, labels
     
     def _read_image(self, image_file):
@@ -255,7 +258,7 @@ if __name__ == '__main__':
                  transform=train_transform, target_transform=target_transform,
                  dataset_type="train", balance_data=args.balance_data)
             '''
-            dataset = LPRDataset(img_train_path, train_csv, transforms=train_transform)
+            dataset = LPRDataset(img_train_path, train_csv, transform=train_transform, target_transform=target_transform)
             label_file = os.path.join(args.checkpoint_folder, "open-images-model-labels.txt")
             #store_labels(label_file, dataset.class_names)
             logging.info(dataset)
@@ -275,7 +278,7 @@ if __name__ == '__main__':
         val_dataset = VOCDataset(args.validation_dataset, transform=test_transform,
                                  target_transform=target_transform, is_test=True)
     elif args.dataset_type == 'open_images':
-        val_dataset = LPRDataset(img_val_path, val_csv, transforms=test_transform)
+        val_dataset = LPRDataset(img_val_path, val_csv, transform=test_transform, target_transform=target_transform)
         logging.info(val_dataset)
     logging.info("validation dataset size: {}".format(len(val_dataset)))
 
