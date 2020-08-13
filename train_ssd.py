@@ -3,6 +3,8 @@ import os
 import logging
 import sys
 import itertools
+import pandas as pd
+from PIL import Image
 
 import torch
 from torch.utils.data import DataLoader, ConcatDataset
